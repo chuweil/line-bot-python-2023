@@ -42,10 +42,14 @@ print("Available models:")
 # models/gemini-pro-vision
 print("\n".join([m.name for m in models]))
 
+StartMessage = [
+    
+]
+
 # 從 Google generativeai 中取得指定的模型
 model = genai.GenerativeModel('gemini-pro')
 # 建立一個使用者字典，用於儲存不同使用者的歷史訊息
-users = defaultdict(lambda: {'history': []})
+users = defaultdict(lambda: {'history': [msg for msg in StartMessage]})
 
 
 # 定義一個路由，用於接收 Line Bot 的訊息
