@@ -39,9 +39,11 @@ model = models[0].name
 
 
 # 定義一個路由，用於接收 Line Bot 的訊息
-@route.route("/", methods=['POST'])
-def callback():
-    # 取得 Line Bot 的簽章
+@route.route("/", methods=['GET','POST'])
+def chat_callback():
+    if request.method == 'GET':
+        return "OK"
+    # 取得 Line Bot 的認證資訊
     signature = request.headers['X-Line-Signature']
 
     # 取得請求的內容

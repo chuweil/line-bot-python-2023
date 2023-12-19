@@ -1,6 +1,5 @@
 from flask import Flask, request, abort
 from api.chat import route as chat_route
-from api.text import route as text_route
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import (
@@ -23,8 +22,10 @@ if ".env" in os.listdir():
 # 如果以主程式執行，__name__ 會是 __main__
 # 如果是被引用，__name__ 會是模組名稱（也就是檔案名稱）
 app = Flask(__name__)
+# 註冊另一個模組 chat.py 的藍圖
+# 註冊後，chat.py 中的路由就會生效
+# 但是 chat.py 中的路由前面都會有 chat/ 的前綴 (url_prefix)
 app.register_blueprint(chat_route,url_prefix='/chat')
-app.register_blueprint(text_route,url_prefix='/text')
 
 _access_token = os.environ.get('access_token')
 _channel_secret = os.environ.get('channel_secret')
@@ -39,7 +40,7 @@ def isAlive():
     return "OK"
 
 # 伺服器在收到 POST 請求 /echo 時，會執行 callback 函式處理
-@app.route("/echo", methods=['POST'])
+@app.route("/echo/", methods=['POST'])
 def callback():
     # 獲取 Header 中 X-Line-Signature 的值
     signature = request.headers['X-Line-Signature']
