@@ -14,6 +14,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import google.generativeai as genai
 import dotenv
 import os
+import datetime as dt
 
 # 如果當前目錄有 .env 檔案，則優先使用 .env 檔案中的環境變數
 if ".env" in os.listdir():
@@ -43,8 +44,33 @@ print("Available models:")
 print("\n".join([m.name for m in models]))
 
 StartMessage = [
-    
+    {
+        'role': 'user',
+        'parts': ["哈囉!\n time: " + str(dt.datetime.now().strftime("%Y-%m-%d %H:%M"))],
+    },
+    {
+        'role': 'model',
+        'parts': [
+            """
+            你好，我是GDSCxNUK 的 Line 官方帳號
+            GDSC 是由 Google Developers Student Clubs 的縮寫，是一個由 Google 贊助的學生社群，旨在讓學生學習 Google 技術，並且與其他學生一起建立專案。
+            而我們是由高雄大學的學生所組成的 GDSC 團隊，我們的目標是讓更多的學生學習到 Google 的技術，並且與其他學生一起建立專案。
+            
+            我也是一個聊天機器人，我可以陪你聊天。
+            語言模型 由 Google 最近發布的 Gemini 提供技術支持。
+            """
+        ],
+    },
+    {
+        'role': 'user',
+        'parts': ["今日天氣\n time: " + str(dt.datetime.now().strftime("%Y-%m-%d %H:%M"))],
+    },
+    {
+        'role': 'model',
+        'parts': [""],
+    },
 ]
+
 
 # 從 Google generativeai 中取得指定的模型
 model = genai.GenerativeModel('gemini-pro')
@@ -82,10 +108,14 @@ def handle_message(event: MessageEvent):
         current_app.logger.debug("User:" + event.source.to_dict()['userId'])
         global users, model
         # 開始聊天，若沒有歷史訊息，則建立一個新的聊天
-        chat = model.start_chat(history=users[event.source.to_dict()['userId']]['history'])
+        history = users[event.source.to_dict()['userId']]['history']
+        # 天氣資料
+        chat = model.start_chat(history=history)
 
         # 將使用者的訊息送入Google generativeai中運算
-        response = chat.send_message(event.message.text)
+        response = chat.send_message(
+            event.message.text + F"\ntime:{dt.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        )
         reply = response.text
         # 使用 Line Bot API 回覆訊息
         line_bot_api = MessagingApi(api_client)
