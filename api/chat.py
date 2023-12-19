@@ -15,6 +15,7 @@ import google.generativeai as genai
 import dotenv
 import os
 import datetime as dt
+import requests
 
 # 如果當前目錄有 .env 檔案，則優先使用 .env 檔案中的環境變數
 if ".env" in os.listdir():
@@ -43,33 +44,48 @@ print("Available models:")
 # models/gemini-pro-vision
 print("\n".join([m.name for m in models]))
 
+
+# 這些Prompt 對語言模型都算是前文，可以幫助語言模型往更好的方向生成
+prompt = """
+你是是GDSCxNUK 的 Line 官方帳號
+當使用者第一次跟你聊天時，請透過下方資訊介紹你自己
+GDSC 是由 Google Developers Student Clubs 的縮寫，是一個由 Google 贊助的學生社群，旨在讓學生學習 Google 技術，並且與其他學生一起建立專案。
+而我們是由高雄大學的學生所組成的 GDSC 團隊，我們的目標是讓更多的學生學習到 Google 的技術，並且與其他學生一起建立專案。
+https://gdsc.community.dev/national-university-of-kaohsiung/
+
+你也是一個聊天機器人，你可以陪用戶聊天。只能使用繁體中文!
+語言模型是由 Google 最近發布的 Gemini 提供技術支持。
+
+請使用不制式的聊天方式(更口語)
+你只能根據我所提供的訊息來回覆特定資料的訊息，例如:天氣、時間、日期。
+若我沒有告訴你的資料被問到時，請回覆「不知道」或「我不知道」。不要瞎掰，謝謝。
+"""
+
 StartMessage = [
     {
         'role': 'user',
-        'parts': ["哈囉!\n time: " + str(dt.datetime.now().strftime("%Y-%m-%d %H:%M"))],
+        'parts': ["系統 : " + prompt],
     },
     {
         'role': 'model',
         'parts': [
             """
-            你好，我是GDSCxNUK 的 Line 官方帳號
-            GDSC 是由 Google Developers Student Clubs 的縮寫，是一個由 Google 贊助的學生社群，旨在讓學生學習 Google 技術，並且與其他學生一起建立專案。
-            而我們是由高雄大學的學生所組成的 GDSC 團隊，我們的目標是讓更多的學生學習到 Google 的技術，並且與其他學生一起建立專案。
-            
-            我也是一個聊天機器人，我可以陪你聊天。
-            語言模型 由 Google 最近發布的 Gemini 提供技術支持。
+            好我會遵守的!等等用戶跟我說話時，我會先介紹這個官方帳號和GDSCxNUK的資訊。
             """
         ],
     },
-    {
-        'role': 'user',
-        'parts': ["今日天氣\n time: " + str(dt.datetime.now().strftime("%Y-%m-%d %H:%M"))],
-    },
-    {
-        'role': 'model',
-        'parts': [""],
-    },
 ]
+
+
+def getWeather():
+    url = "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-D0047-065?Authorization=CWA-0A877B7D-95C1-4109-A964-8A50A48DBF1B&limit=1&format=JSON&locationName=%E6%A5%A0%E6%A2%93%E5%8D%80&elementName=WeatherDescription"
+    res = requests.get(url)
+    res = res.json()
+    res = res['records']['locations'][0]['location'][0]['weatherElement'][0]['time'][0][
+        'elementValue'
+    ][0]["value"]
+    # EX 陰。降雨機率 30%。溫度攝氏20度。稍有寒意。偏北風 平均風速2-3級(每秒5公尺)。相對濕度77%。
+    return res
 
 
 # 從 Google generativeai 中取得指定的模型
@@ -109,7 +125,11 @@ def handle_message(event: MessageEvent):
         global users, model
         # 開始聊天，若沒有歷史訊息，則建立一個新的聊天
         history = users[event.source.to_dict()['userId']]['history']
-        # 天氣資料
+
+        # 更新天氣資料
+        history[0] = StartMessage[0]
+        history[0]['parts'][0] = history[0]['parts'][0] + "\n--- 系統訊息 ---\n 楠梓區今天天氣:" + getWeather()
+
         chat = model.start_chat(history=history)
 
         # 將使用者的訊息送入Google generativeai中運算
