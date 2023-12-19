@@ -2,9 +2,7 @@
 
 ## About The Project
 
-It is an echo bot using line-bot-sdk-python.  
-This branch is specifically designed for Vercel.  
-The main branch is [here](https://github.com/henry753951/line-bot-python-example)
+Here are some examples of line bot.
 
 ## Usage for Vercel
 
