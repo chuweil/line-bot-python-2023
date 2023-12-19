@@ -1,5 +1,6 @@
 from flask import Flask, request, abort
 from api.chat import route as chat_route
+from api.keyword import route as keyword_route
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import (
@@ -26,6 +27,7 @@ app = Flask(__name__)
 # 註冊後，chat.py 中的路由就會生效
 # 但是 chat.py 中的路由前面都會有 chat/ 的前綴 (url_prefix)
 app.register_blueprint(chat_route,url_prefix='/chat')
+app.register_blueprint(keyword_route,url_prefix='/keyword')
 
 _access_token = os.environ.get('access_token')
 _channel_secret = os.environ.get('channel_secret')
