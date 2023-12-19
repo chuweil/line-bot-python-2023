@@ -34,7 +34,7 @@ def isAlive():
     return "OK"
 
 
-@app.route("/callback", methods=['POST'])
+@app.route("/echo", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']

@@ -24,7 +24,7 @@ _channel_secret = os.environ.get('channel_secret')
 
 palm.configure(api_key=_google_generativeai_token)
 
-route = Blueprint(name="__text",import_name=__name__)
+route = Blueprint(name="__text", import_name=__name__)
 
 configuration = Configuration(access_token=_access_token)
 line_handler = WebhookHandler(_channel_secret)
@@ -33,12 +33,7 @@ models = [m for m in palm.list_models() if 'generateText' in m.supported_generat
 model = models[0].name
 
 
-@route.route("/")
-def isAlive():
-    return "OK"
-
-
-@route.route("/callback", methods=['POST'])
+@route.route("/", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
