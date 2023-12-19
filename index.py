@@ -31,4 +31,4 @@ def isAlive():
 # 主程式進入點
 if __name__ == "__main__":
     # 啟動網路伺服器
-    app.run(debug=True, port=os.environ.get('PORT', 5000))
+    app.run(debug=True, port=os.environ.get('port', 5000))
