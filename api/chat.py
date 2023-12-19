@@ -10,7 +10,7 @@ from linebot.v3.messaging import (
     TextMessage,
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-import google.generativeai as palm
+import google.generativeai as GoogleAI
 import dotenv
 import os
 
@@ -24,7 +24,7 @@ _access_token = os.environ.get('access_token')
 _channel_secret = os.environ.get('channel_secret')
 
 # 設定 Google generativeai 的 API 金鑰
-palm.configure(api_key=_google_generativeai_token)
+GoogleAI.configure(api_key=_google_generativeai_token)
 
 # 建立一個新的藍圖
 route = Blueprint(name="__chat", import_name=__name__)
@@ -34,7 +34,7 @@ configuration = Configuration(access_token=_access_token)
 line_handler = WebhookHandler(_channel_secret)
 
 # 從 Google generativeai 中取得所有支援文字生成的模型
-models = [m for m in palm.list_models() if 'generateText' in m.supported_generation_methods]
+models = [m for m in GoogleAI.list_models() if 'generateText' in m.supported_generation_methods]
 model = models[0].name
 
 
@@ -75,7 +75,7 @@ def handle_message(event):
         history.append(event.message.text)
         history = history[-10:]
         # 使用 Google generativeai 產生回覆訊息
-        response = palm.chat(messages=history)
+        response = GoogleAI.chat(messages=history)
         current_app.logger.info(response)
         if response.filters:
             current_app.logger.info(response.filters)
