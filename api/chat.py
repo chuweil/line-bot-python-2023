@@ -1,4 +1,5 @@
 # 引入需要的模組
+from collections import defaultdict
 from flask import request, abort, Blueprint, current_app
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
@@ -36,12 +37,19 @@ line_handler = WebhookHandler(_channel_secret)
 # 從 Google generativeai 中取得所有支援文字生成的模型
 models = [m for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
 print("Available models:")
+# Available models:
+# models/gemini-pro
+# models/gemini-pro-vision
 print("\n".join([m.name for m in models]))
-model = models[0].name
+
+# 從 Google generativeai 中取得指定的模型
+model = genai.GenerativeModel('gemini-pro')
+# 建立一個使用者字典，用於儲存不同使用者的歷史訊息
+users = defaultdict(lambda: {'history': []})
 
 
 # 定義一個路由，用於接收 Line Bot 的訊息
-@route.route("/", methods=['GET','POST'])
+@route.route("/", methods=['GET', 'POST'])
 def chat_callback():
     if request.method == 'GET':
         return "OK"
@@ -53,10 +61,11 @@ def chat_callback():
     current_app.logger.info("Request body: " + body)
 
     # 處理 webhook 的內容
+    # 若驗證失敗，則回傳錯誤訊息 (400)
     try:
         line_handler.handle(body, signature)
     except InvalidSignatureError:
-        current_app.logger.info(
+        current_app.logger.error(
             "Invalid signature. Please check your channel access token/channel secret."
         )
         abort(400)
@@ -64,27 +73,18 @@ def chat_callback():
     return 'OK'
 
 
-# 建立一個空的歷史訊息列表
-history = []
-
-
 # 定義一個處理訊息的函數
 @line_handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
+def handle_message(event: MessageEvent):
     with ApiClient(configuration) as api_client:
-        global history
-        # 將新的訊息加入到歷史訊息中，並只保留最後 10 條訊息
-        history.append(event.message.text)
-        history = history[-10:]
-        # 使用 Google generativeai 產生回覆訊息
-        response = genai.chat(messages=history)
-        current_app.logger.info(response)
-        if response.filters:
-            current_app.logger.info(response.filters)
-            reply = "回覆內容被阻擋 (不支援中文)"
-        else:
-            reply = response.last
+        current_app.logger.debug("User:" + event.source.to_dict()['userId'])
+        global users, model
+        # 開始聊天，若沒有歷史訊息，則建立一個新的聊天
+        chat = model.start_chat(history=users[event.source.to_dict()['userId']]['history'])
 
+        # 將使用者的訊息送入Google generativeai中運算
+        response = chat.send_message(event.message.text)
+        reply = response.text
         # 使用 Line Bot API 回覆訊息
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
@@ -92,3 +92,6 @@ def handle_message(event):
                 reply_token=event.reply_token, messages=[TextMessage(text=str(reply))]
             )
         )
+        # 將聊天的歷史訊息儲存起來
+        users[event.source.to_dict()['userId']]['history'] = chat.history
+        print("User history:", users[event.source.to_dict()['userId']]['history'])
