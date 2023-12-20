@@ -6,7 +6,7 @@ Here are some examples of line bot.
 
 ## Usage for Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgdscnuk%2Fline-bot-python-2023%2Ftree%2Fvercel&env=access_token,channel_secret,google_generativeai_token)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgdscnuk%2Fline-bot-python-2023%2Ftree%2Fmain&env=access_token,channel_secret,google_generativeai_token)
 
 
 ## Usage for local
